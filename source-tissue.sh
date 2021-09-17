@@ -5,6 +5,8 @@ somaticsniper="${EVALROOT}/tools/somatic-sniper-1.0.5.0/build/bin/bam-somaticsni
 lolopicker="${EVALROOT}/tools/LoLoPicker/build/scripts-2.7/LoLoPicker_somatic.py"
 varscan2="${java8} -jar ${EVALROOT}/tools/VarScan.v2.4.2.jar "
 outlyzer="${EVALROOT}/tools/outLyzer-3.0/outLyzer.py"
+octopus="${EVALROOT}/tools/venv/bin/octopus"
+lancet="${EVALROOT}/tools/lancet-1.1.0/lancet"
 
 function ensure_valid_header_for_vcfeval {
     if [ $(bcftools view -H "${1}" | wc -l) -eq 0 ]; then
@@ -218,7 +220,56 @@ function run_tnpair {
             chmod uga+rwxs "${evaladir}" "${evalfdir}" || true
         fi
     fi
-
+    
+    setup_tnpair octopus
+    if isfound "${1}" enable-${vcname}-all ; then
+        #callvcfdir="${calldir}/${vcname}/"
+        callvcf="${callvcfdir}/octopus.vcf"
+        if isnotfound "${1}" "enable-only-vcf-eval" ; then
+            if isfound "${1}" "run-${vcname}-all|run-${vcname}-call" ; then
+                ${mkdir777} "${callvcfdir}"
+                abam="${callvcfdir}/${tsample}_${nsample}_merged.bam"
+                samtools merge -f -@ ${ncpus} "${abam}" "${tbam}" "${nbam}"
+                samtools index -@ ${ncpus} "${abam}"
+                date ; ${monitortime} "${octopus}" --target-read-buffer-footprint 1GB -I "${abam}" -N "${nrefmat}" -R "${fastaref}.fa" -o "${callvcf}" --threads ${ncpus} --somatics-only
+            fi
+            if  isfound "${1}" "run-${vcname}-all|run-${vcname}-norm" ; then
+                bcftools view "${callvcf}" | awk 'OFS="\t" { if ($0 !~ "^#") {$9="GT:"$9; $10="0/1:"$10; $11="0/1:"$11; print; } else { print;}}' \
+                    | sed 's/\tGT:GT:/\tGT:GTX:/g' | bcftools view -Oz -o "${normvcf}" - 
+                ensure_valid_header_for_vcfeval "${normvcf}" "${fastaref}"
+                bcftools index -ft "${normvcf}"
+            fi
+        fi
+        if isfound "${1}" "run-${vcname}-all|run-${vcname}-eval" ; then 
+            rm -r "${evaladir}" "${evalfdir}" || true
+            date ; ${monitortime} ${vcfeval1soma} -o "${evaladir}" -t "${sdfref}" -b "${truthvcf}" -e "${truthbed}" -c "${normvcf}" --sample "${refsample},${trefmat}" -f QUAL
+            date ; ${monitortime} ${vcfeval2soma} -o "${evalfdir}" -t "${sdfref}" -b "${truthvcf}" -e "${truthbed}" -c "${normvcf}" --sample "${refsample},${trefmat}" -f QUAL
+            chmod uga+rwxs "${evaladir}" "${evalfdir}" || true
+        fi
+    fi
+    
+    setup_tnpair lancet
+    if isfound "${1}" enable-${vcname}-all ; then
+        callvcf="${callvcfdir}/lancet.vcf"
+        if isnotfound "${1}" "enable-only-vcf-eval" ; then
+            if isfound "${1}" "run-${vcname}-all|run-${vcname}-call" ; then
+                ${mkdir777} "${callvcfdir}"
+                date ; ${monitortime} "${lancet}" -t "${tbam}" -n "${nbam}" -r "${fastaref}" --num-threads ${ncpus} -B "${truthbed}" > "${callvcf}"
+            fi
+            if  isfound "${1}" "run-${vcname}-all|run-${vcname}-norm" ; then
+                bcftools view "${callvcf}" -Oz -o "${normvcf}"
+                ensure_valid_header_for_vcfeval "${normvcf}" "${fastaref}"
+                bcftools index -ft "${normvcf}"
+            fi
+        fi
+        if isfound "${1}" "run-${vcname}-all|run-${vcname}-eval" ; then 
+            rm -r "${evaladir}" "${evalfdir}" || true
+            date ; ${monitortime} ${vcfeval1soma} -o "${evaladir}" -t "${sdfref}" -b "${truthvcf}" -e "${truthbed}" -c "${normvcf}" --sample "${refsample},${trefmat}" -f QUAL
+            date ; ${monitortime} ${vcfeval2soma} -o "${evalfdir}" -t "${sdfref}" -b "${truthvcf}" -e "${truthbed}" -c "${normvcf}" --sample "${refsample},${trefmat}" -f QUAL
+            chmod uga+rwxs "${evaladir}" "${evalfdir}" || true
+        fi
+    fi
+    
     setup_tnpair varscan2
     if isfound "${1}" enable-${vcname}-all ; then
         callprefix="${calldir}/${tsample}_${nsample}.${vcname}"
