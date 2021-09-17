@@ -9,7 +9,7 @@ if [ $# -lt 2 ]; then
     echo "  The user can run a subset of the options given that their pre-requisite options were already successfully run. "
     echo "  In general, the order of commands is: setup, prep (prepare), and run. "
     
-    echo "  enable-tumor-only : let variant caller(s) run in tumor-only mode (so far only UVC, Mutect2 and lofreq can do so). "
+    echo "  enable-tumor-only : let variant caller(s) run in tumor-only mode (so far only uvc1, gatk4mutect2, and lofreq can do so). "
     echo "  enable-tn-pair : let variant caller(s) run in tumor-normal-pair mode (all variant callers can do so). "
     
     echo "  use-<type>-mixture : create virtual tumor-normal pairs using <type> original bam data, where <type> can be one of the following three words. "
@@ -32,7 +32,7 @@ if [ $# -lt 2 ]; then
     echo "      Finally, dindel inserts InDel basecall-like qualilites. "
     echo "      These are the preprocessing steps for their variant callers to make variant calls. "
     echo "  step 8 : run-<variantcaller>-<stage> "
-    echo "      <variantcaller> can be uvc1, gatk4mutect2, strelka2, lofreq, lolopicker, somaticsniper, and varscan2. "
+    echo "      <variantcaller> can be uvc1, gatk4mutect2, strelka2, lofreq, lolopicker, octopus, lancet, somaticsniper, and varscan2. "
     echo "      <stage> can be call, norm, eval, or all (run all three stages), The order of the three stages is call-norm-eval. "
     echo "      The call stage performs variant calling, the norm stage normalizes variants for evaluation, and the eval stage evaluates calling performance. "
     echo "  step 9 : run-custom-prplot: generate precision-recall curves. "
@@ -321,9 +321,9 @@ run_bamprep "${PAT}" "${HS37D5}" "${tbam}" "${EVALROOT}/datafiles/hg19/dbsnp_138
 run_bamprep "${PAT}" "${HS37D5}" "${nbam}" "${EVALROOT}/datafiles/hg19/dbsnp_138.b37.vcf" "${ncpus}"
 
 if isfound "${PAT}" enable-tn-pair ; then
-    run_tnpair "${PAT}.enable-uvc1-all.enable-strelka2-all.enable-lolopicker-all.enable-varscan2-all.enable-somaticsniper-all" \
+    run_tnpair "${PAT}.enable-uvc1-all.enable-strelka2-all.enable-lolopicker-all.enable-octopus-all.enable-varscan2-all.enable-somaticsniper-all" \
         "${resultRootDir}/${scenario}/" "${HS37D5}" "${TRUTH_VCF_GZ}" "${TRUTH_BED}" "${tbam}" "${tsample}" "${nbam}" "${nsample}" "${ncpus}"
-    run_tnpair "${PAT}.enable-gatk4mutect2-all" \
+    run_tnpair "${PAT}.enable-gatk4mutect2-all.enable-lancet-all" \
         "${resultRootDir}/${scenario}/" "${HS37D5}" "${TRUTH_VCF_GZ}" "${TRUTH_BED}" "${recaltbam}" "${tsample}" "${recalnbam}" "${nsample}" "${ncpus}"
     run_tnpair "${PAT}.enable-lofreq-all" \
         "${resultRootDir}/${scenario}/" "${HS37D5}" "${TRUTH_VCF_GZ}" "${TRUTH_BED}" "${dindeltbam}" "${tsample}" "${dindelnbam}" "${nsample}" "${ncpus}"
@@ -362,7 +362,9 @@ if isfound "${PAT}" "run-custom-prplot"; then
         eval_somaticsniper="${resdir}/${tsample}_${nsample}.somaticsniper_norm_vcfeval-all.dir"
         eval_lofreq="${resdir}/${tsample}_${nsample}.lofreq_norm_vcfeval-all.dir"
         eval_lolopicker="${resdir}/${tsample}_${nsample}.lolopicker_norm_vcfeval-all.dir"
-        
+        eval_octopus="${resdir}/${tsample}_${nsample}.octopus_norm_vcfeval-all.dir"
+        eval_lancet="${resdir}/${tsample}_${nsample}.lancet_norm_vcfeval-all.dir"
+
         rocfile="/snp_roc.tsv.gz"
         python "${EVALROOT}/common/custom-prplot.py" "${resdir}/${tsample}_${nsample}_all-methods-custom-prplot_snp.pdf"     "${prplotHeader}" 0.00,0.00 \
             "${eval_uvc}${rocfile}" \
@@ -374,7 +376,9 @@ if isfound "${PAT}" "run-custom-prplot"; then
             "${eval_somaticsniper}${rocfile}" \
             "${eval_lofreq}${rocfile}" \
             "${eval_lolopicker}${rocfile}" \
-        
+            "${eval_octopus}${rocfile}" \
+            "${eval_lancet}${rocfile}" \
+ 
         rocfile="/non_snp_roc.tsv.gz"
         python "${EVALROOT}/common/custom-prplot.py" "${resdir}/${tsample}_${nsample}_all-methods-custom-prplot_non_snp.pdf" "${prplotHeader}" 0.00,0.00 \
             "${eval_uvc}${rocfile}" \
@@ -386,7 +390,9 @@ if isfound "${PAT}" "run-custom-prplot"; then
             "${eval_somaticsniper}${rocfile}" \
             "${eval_lofreq}${rocfile}" \
             "${eval_lolopicker}${rocfile}" \
-        
+            "${eval_octopus}${rocfile}" \
+            "${eval_lancet}${rocfile}" \
+ 
     elif isfound "${PAT}" enable-tumor-only; then
         eval_uvc="${resdir}/${tsample}_tonly.${PARAMSET}_norm_vcfeval-all.dir"
         eval_mutect2raw="${resdir}/${tsample}_tonly.gatk4mutect2_norm_vcfeval-all.dir"
