@@ -10,14 +10,14 @@ else
     source "${EVALROOT}/source-eval.sh"
 fi
 
-TRUTH_BED="${EVALROOT}/seqc2/truth/High-Confidence_Regions.bed"
-TRUTH_VCF="${EVALROOT}/seqc2/truth/high-confidence-sALL_in_HC-regions_v1.1.vcf.gz"
-TRUTH_BOTHCONF_VCF="${EVALROOT}/seqc2/truth/high-confidence-sALL_in_HC-regions_v1.1.BothConf.vcf.gz"
-TRUTH_HIGHCONF_VCF="${EVALROOT}/seqc2/truth/high-confidence-sALL_in_HC-regions_v1.1.HighConf.vcf.gz"
+TRUTH_BED="${EVALROOT}/seqc2/truth/High-Confidence_Regions_v1.2.bed" # "${EVALROOT}/seqc2/truth/High-Confidence_Regions.bed"
+TRUTH_VCF="${EVALROOT}/seqc2/truth/high-confidence_sALL_in_HC_regions_v1.2.vcf.gz" #"${EVALROOT}/seqc2/truth/high-confidence-sALL_in_HC-regions_v1.1.vcf.gz"
+TRUTH_BOTHCONF_VCF="${EVALROOT}/seqc2/truth/high-confidence_sALL_in_HC_regions_v1.2.BothConf.vcf.gz"
+TRUTH_HIGHCONF_VCF="${EVALROOT}/seqc2/truth/high-confidence_sALL_in_HC_regions_v1.2.HighConf.vcf.gz"
 
 if isfound "${PAT}" "run-truth-prep" ; then
-    TRUTH_VCF_SNV="${EVALROOT}/seqc2/truth/high-confidence-sSNV_in_HC-regions_v1.1.vcf.gz"
-    TRUTH_VCF_INDEL="${EVALROOT}/seqc2/truth/high-confidence-sINDEL_in_HC-regions_v1.1.vcf.gz"
+    TRUTH_VCF_SNV="${EVALROOT}/seqc2/truth/high-confidence_sSNV_in_HC_regions_v1.2.vcf.gz"
+    TRUTH_VCF_INDEL="${EVALROOT}/seqc2/truth/high-confidence_sINDEL_in_HC_regions_v1.2.vcf.gz"
     bcftools index -ft "${TRUTH_VCF_SNV}" ; bcftools index -ft "${TRUTH_VCF_INDEL}"
     # Definitions for GT and GQ are from https://samtools.github.io/hts-specs/VCFv4.3.pdf
     bcftools concat -a "${TRUTH_VCF_SNV}" "${TRUTH_VCF_INDEL}" | awk -F"\t" \
@@ -141,8 +141,9 @@ if isfound "${PAT}" "enable-tn-pair" ; then
     for tdepth in 100 200; do for ndepth in 50 100; do for conflevel in ".BothConf" ".HighConf"; do
     
     TRUTH_BED="${bamdir}/${SRR}_${nSRR}.${tdepth}_${ndepth}.bed"
-    TRUTH_VCF_GZ="${EVALROOT}/seqc2/truth/high-confidence-sALL_in_HC-regions_v1.1${conflevel}.vcf.gz"
-    
+   #TRUTH_VCF_GZ="${EVALROOT}/seqc2/truth/high-confidence-sALL_in_HC-regions_v1.1${conflevel}.vcf.gz"
+    TRUTH_VCF_GZ="${EVALROOT}/seqc2/truth/high-confidence_sALL_in_HC_regions_v1.2${conflevel}.vcf.gz"
+
     if [ ${is_call_done} -gt 0 ]; then 
         enable_only_vcf_eval="enable-only-vcf-eval"
     else
@@ -153,9 +154,9 @@ if isfound "${PAT}" "enable-tn-pair" ; then
     tnpair_evalsuffix="${tdepth}_${ndepth}${conflevel}"
     
     ${mkdir777} "${tnpair_resdir}"
-    run_tnpair "${PAT}.enable-uvc1-all.enable-strelka2-all.enable-lolopicker-all.enable-varscan2-all.enable-somaticsniper-all.${enable_only_vcf_eval}" \
+    run_tnpair "${PAT}.enable-uvc1-all.enable-strelka2-all.enable-lolopicker-all.enable-varscan2-all.enable-somaticsniper-all.enable-octopus-all.${enable_only_vcf_eval}" \
         "${tnpair_resdir},${tnpair_evalsuffix}" "${GRCH38}" "${TRUTH_VCF_GZ}" "${TRUTH_BED}" "${tbam}" "${SRR},${TREFMAT}" "${nbam}" "${nSRR},${NREFMAT}" "${ncpus}"
-    run_tnpair "${PAT}.enable-gatk4mutect2-all.${enable_only_vcf_eval}" \
+    run_tnpair "${PAT}.enable-gatk4mutect2-all.enable-lancet-all.${enable_only_vcf_eval}" \
         "${tnpair_resdir},${tnpair_evalsuffix}" "${GRCH38}" "${TRUTH_VCF_GZ}" "${TRUTH_BED}" "${recaltbam}" "${SRR},${TREFMAT}" "${recalnbam}" "${nSRR},${NREFMAT}" "${nbams}"
     run_tnpair "${PAT}.enable-lofreq-all.${enable_only_vcf_eval}" \
         "${tnpair_resdir},${tnpair_evalsuffix}" "${GRCH38}" "${TRUTH_VCF_GZ}" "${TRUTH_BED}" "${dindeltbam}" "${SRR},${TREFMAT}" "${dindelnbam}" "${nSRR},${NREFMAT}" "${ncpus}"
@@ -186,6 +187,8 @@ if isfound "${PAT}" "enable-tn-pair" ; then
         eval_somaticsniper="${resdir}/${tsample}_${nsample}.somaticsniper_norm_vcfeval-all${tnpair_evalsuffix}.dir"
         eval_lofreq="${resdir}/${tsample}_${nsample}.lofreq_norm_vcfeval-all${tnpair_evalsuffix}.dir"
         eval_lolopicker="${resdir}/${tsample}_${nsample}.lolopicker_norm_vcfeval-all${tnpair_evalsuffix}.dir"
+        eval_octopus="${resdir}/${tsample}_${nsample}.octopus_norm_vcfeval-all${tnpair_evalsuffix}.dir"
+        eval_lancet="${resdir}/${tsample}_${nsample}.lancet_norm_vcfeval-all${tnpair_evalsuffix}.dir"
         
         rocfile="/snp_roc.tsv.gz"
         python "${EVALROOT}/common/custom-prplot.py" "${resdir}/${tsample}_${nsample}_${tnpair_evalsuffix}_all-methods-custom-prplot_snp.pdf"     "${prplotHeader}" 0.00,0.00 \
@@ -197,6 +200,8 @@ if isfound "${PAT}" "enable-tn-pair" ; then
             "${eval_varscan2filt}${rocfile}" \
             "${eval_somaticsniper}${rocfile}" \
             "${eval_lofreq}${rocfile}" \
+            "${eval_lancet}${rocfile}" \
+            "${eval_octopus}${rocfile}" \
             
             #"${eval_lolopicker}${rocfile}" \
 
@@ -210,6 +215,8 @@ if isfound "${PAT}" "enable-tn-pair" ; then
             "${eval_varscan2filt}${rocfile}" \
             "${eval_somaticsniper}${rocfile}" \
             "${eval_lofreq}${rocfile}" \
+            "${eval_lancet}${rocfile}" \
+            "${eval_octopus}${rocfile}" \
             
             #"${eval_lolopicker}${rocfile}" \
     
