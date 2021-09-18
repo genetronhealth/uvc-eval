@@ -128,14 +128,14 @@ for i in $(seq 0 48); do
 done
 
 nbams=8
-for i in $(seq 0 12); do
+for i in $(seq 0 48); do
     if isfound "${PAT}" use-${i}-bams ; then
         nbams=${i}
     fi
 done
 
 nchroms=0
-for i in $(seq 0 12); do
+for i in $(seq 0 48); do
     if isfound "${PAT}" use-${i}-chroms ; then
         nchroms=${i}
     fi
