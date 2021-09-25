@@ -77,7 +77,10 @@ def get_label(fname1, getbest = 0):
         return (2.5, fname1, 'freebayes')
     elif 'bcftools' in fname:
         return (3.5, fname1, 'bcftools')
-    
+    elif 'lancet' in fname:
+        return (4.5, fname1, ('Lancet-all' if 'vcfeval-all' in fname else 'Lancet-filter'))
+    elif 'octopus' in fname:
+        return (4.6, fname1, ('Octopus-all' if 'vcfeval-all' in fname else 'Octopus-filter'))
     elif 'uvc' in fname:
         fpvcf = fname1.replace('non_snp_roc.tsv.gz', '').replace('snp_roc.tsv.gz', '') + 'fp.vcf.gz'
         uvcversion = 'NoVersion'

@@ -19,6 +19,8 @@ def vc_fscore_to_priority(vc_fscore):
         return '0' + vc
     if 'Mutect2' in vc or 'Strelka2' in vc or 'Varscan2' in vc:
         return '1' + vc
+    if 'Lancet' in vc or 'Octopus' in vc:
+        return '3' + vc
     return '2' + vc
     
 def main():

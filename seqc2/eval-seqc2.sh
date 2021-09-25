@@ -187,8 +187,9 @@ if isfound "${PAT}" "enable-tn-pair" ; then
         eval_somaticsniper="${resdir}/${tsample}_${nsample}.somaticsniper_norm_vcfeval-all${tnpair_evalsuffix}.dir"
         eval_lofreq="${resdir}/${tsample}_${nsample}.lofreq_norm_vcfeval-all${tnpair_evalsuffix}.dir"
         eval_lolopicker="${resdir}/${tsample}_${nsample}.lolopicker_norm_vcfeval-all${tnpair_evalsuffix}.dir"
-        eval_octopus="${resdir}/${tsample}_${nsample}.octopus_norm_vcfeval-all${tnpair_evalsuffix}.dir"
-        eval_lancet="${resdir}/${tsample}_${nsample}.lancet_norm_vcfeval-all${tnpair_evalsuffix}.dir"
+        eval_octopus_all="${resdir}/${tsample}_${nsample}.octopus_norm_vcfeval-all${tnpair_evalsuffix}.dir"
+        eval_octopus_filt="${resdir}/${tsample}_${nsample}.octopus_norm_vcfeval-filt${tnpair_evalsuffix}.dir"
+        eval_lancet_filt="${resdir}/${tsample}_${nsample}.lancet_norm_vcfeval-filt${tnpair_evalsuffix}.dir"
         
         rocfile="/snp_roc.tsv.gz"
         python "${EVALROOT}/common/custom-prplot.py" "${resdir}/${tsample}_${nsample}_${tnpair_evalsuffix}_all-methods-custom-prplot_snp.pdf"     "${prplotHeader}" 0.00,0.00 \
@@ -200,8 +201,8 @@ if isfound "${PAT}" "enable-tn-pair" ; then
             "${eval_varscan2filt}${rocfile}" \
             "${eval_somaticsniper}${rocfile}" \
             "${eval_lofreq}${rocfile}" \
-            "${eval_lancet}${rocfile}" \
-            "${eval_octopus}${rocfile}" \
+            "${eval_lancet_filt}${rocfile}" \
+            "${eval_octopus_all}${rocfile}" "${eval_octopus_filt}${rocfile}"   \
             
             #"${eval_lolopicker}${rocfile}" \
 
@@ -215,9 +216,9 @@ if isfound "${PAT}" "enable-tn-pair" ; then
             "${eval_varscan2filt}${rocfile}" \
             "${eval_somaticsniper}${rocfile}" \
             "${eval_lofreq}${rocfile}" \
-            "${eval_lancet}${rocfile}" \
-            "${eval_octopus}${rocfile}" \
-            
+            "${eval_lancet_filt}${rocfile}" \
+            "${eval_octopus_all}${rocfile}" "${eval_octopus_filt}${rocfile}"   \
+             
             #"${eval_lolopicker}${rocfile}" \
     
     fi
